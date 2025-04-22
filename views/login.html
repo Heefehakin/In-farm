@@ -4,93 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Passport Auth</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .form-container {
-            margin-top: 50px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .google-btn {
-            background-color: #dd4b39;
-            margin-top: 10px;
-        }
-        .divider {
-            text-align: center;
-            margin: 20px 0;
-        }
-    </style>
+    <title>Login - In-farm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="form-container">
-        <h2>Login</h2>
-        <form onsubmit="handleLogin(event)">
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="text-center mb-4">Login to In-farm</h2>
+                        <div class="d-grid gap-2">
+                            <a href="/auth/google" class="btn btn-danger">
+                                <img src="https://www.google.com/favicon.ico" alt="Google" width="20" class="me-2">
+                                Continue with Google
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-
-        <div class="divider">OR</div>
-
-        <button class="google-btn" onclick="window.location.href='/auth/google'">
-            Login with Google
-        </button>
-
-        <p style="text-align: center;">
-            Don't have an account? <a href="/signup">Sign up</a>
-        </p>
+        </div>
     </div>
-
-    <script>
-        function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            fetch('/api/users/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === 'Login successful') {
-                    window.location.href = '/';
-                } else {
-                    alert(data.message);
-                }
-            })
-            .catch(err => console.error('Login failed:', err));
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

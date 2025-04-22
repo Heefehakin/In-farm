@@ -1,96 +1,135 @@
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Passport Auth</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .profile-section {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 8px;
-            background-color: #f8f9fa;
-        }
-
-        .profile-image {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin-bottom: 15px;
-        }
-
-        .logout-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
+    <title>Dashboard - In-farm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-
 <body>
-    <div class="nav">
-        <h2>Welcome to Dashboard</h2>
-        <button class="logout-btn" onclick="handleLogout()">Logout</button>
-    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">In-farm Dashboard</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/users/profile" id="profileLink">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth/logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <div class="profile-section">
-        <div id="userProfile">
-            Loading profile...
+    <main class="container my-4">
+        <div class="row">
+            <!-- Farm Investments List -->
+            <div class="col-md-8">
+                <h2>Available Farm Investments</h2>
+                <div id="farmsList" class="row g-4"></div>
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination" id="pagination"></ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- User Investments -->
+            <div class="col-md-4">
+                <h2>My Investments</h2>
+                <div id="userInvestments"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Investment Modal -->
+    <div class="modal fade" id="investModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Invest in Farm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="investForm">
+                        <div class="mb-3">
+                            <label class="form-label">Number of Units</label>
+                            <input type="number" class="form-control" id="units" required min="1">
+                        </div>
+                        <div class="mb-3">
+                            <p>Total Amount: <span id="totalAmount">₦0</span></p>
+                        </div>
+                        <button type="submit" class="btn btn-success">Proceed to Payment</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Fetch user profile data
-        fetch('/api/users/profile', {
-            credentials: 'include'
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('User profile:', data);
-
-                const profileHTML = `
-                ${data.profilePicture ? `<img src=${data.profilePicture} class="profile-image" alt="Profile">` : ''}
-                <h3>${data.firstName} ${data.lastName}</h3>
-                <p>Email: ${data.email || 'N/A'}</p>
-                <p>Account type: ${data.googleId ? 'Google Account' : 'Local Account'}</p>
-            `;
-                document.getElementById('userProfile').innerHTML = profileHTML;
-            })
-            .catch(err => {
-                console.error('Failed to load profile:', err);
-                document.getElementById('userProfile').innerHTML = 'Failed to load profile';
-            });
-
-        function handleLogout() {
-            fetch('/api/users/logout', {
-                method: 'POST',
-                credentials: 'include'
-            })
-                .then(() => {
-                    window.location.href = '/login';
-                })
-                .catch(err => console.error('Logout failed:', err));
+        // Fetch and display farms
+        async function fetchFarms(page = 1) {
+            try {
+                const response = await fetch(`/api/farms?page=${page}`);
+                const data = await response.json();
+                displayFarms(data.farms);
+                setupPagination(data.totalPages, data.currentPage);
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
+
+        // Display farms in the UI
+        function displayFarms(farms) {
+            const farmsList = document.getElementById('farmsList');
+            farmsList.innerHTML = farms.map(farm => `
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">${farm.name}</h5>
+                            <p class="card-text">Location: ${farm.location}</p>
+                            <p class="card-text">Duration: ${farm.duration}</p>
+                            <p class="card-text">Price per Unit: ₦${farm.pricePerUnit}</p>
+                            <button class="btn btn-success" onclick="openInvestModal('${farm.id}', ${farm.pricePerUnit})">
+                                Invest Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Fetch and display user investments
+        async function fetchUserInvestments() {
+            try {
+                const response = await fetch('/api/investments');
+                const investments = await response.json();
+                const investmentsList = document.getElementById('userInvestments');
+                investmentsList.innerHTML = investments.map(inv => `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">${inv.Farm.name}</h6>
+                            <p class="card-text">Units: ${inv.units}</p>
+                            <p class="card-text">Total: ₦${inv.totalAmount}</p>
+                            <p class="card-text">Status: ${inv.paymentStatus}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Initial load
+        fetchFarms();
+        fetchUserInvestments();
     </script>
 </body>
-
 </html>

@@ -1,64 +1,42 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - Passport Auth</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .nav {
-            display: flex;
-            justify-content: space-between;
-            padding: 1rem 0;
-        }
-        .welcome {
-            text-align: center;
-            margin-top: 50px;
-        }
-        .nav a {
-            text-decoration: none;
-            color: #007bff;
-            margin-left: 15px;
-        }
-        .logout-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
+    <title>In-farm - Invest in Agriculture</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="nav">
-        <h2>Passport Auth</h2>
-        <div>
-            <a href="/src/views/login.html">Login</a>
-            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">In-farm</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </div>
-    <div class="welcome">
-        <h1>Welcome to Passport Authentication</h1>
-        <p>Please login to continue</p>
-    </div>
-    
-    <script>
-        function handleLogout() {
-            fetch('/api/users/logout', {
-                method: 'POST',
-                credentials: 'include'
-            })
-            .then(() => {
-                window.location.href = '/login';
-            })
-            .catch(err => console.error('Logout failed:', err));
-        }
-    </script>
+    </nav>
+
+    <main class="container my-5">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h1>Invest in Agriculture</h1>
+                <p class="lead">Make smart investments in farming projects and earn returns while supporting agriculture.</p>
+                <a href="/auth/google" class="btn btn-success btn-lg">Get Started</a>
+            </div>
+            <div class="col-md-6">
+                <img src="https://placeholder.com/800x600" alt="Farm Investment" class="img-fluid rounded">
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

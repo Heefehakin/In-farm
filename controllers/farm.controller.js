@@ -2,7 +2,14 @@ const Farm = require('../models/farm.model');
 const Investment = require('../models/investment.model');
 const Flutterwave = require('flutterwave-node-v3');
 
+
 const flw = new Flutterwave(process.env.FLW_PUBLIC_KEY, process.env.FLW_SECRET_KEY);
+
+if (!process.env.FLW_PUBLIC_KEY || !process.env.FLW_SECRET_KEY) {
+    console.error('Flutterwave API keys are required');
+    process.exit(1);
+}
+
 
 exports.getAllFarms = async (req, res) => {
     try {
