@@ -17,7 +17,10 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/api/users/profile" id="profileLink">Profile</a>
+                        <a class="nav-link" href="#" id="profileLink">Profile</a>
+                    </li>
+                    <li class="nav-item admin-only" style="display: none;">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#addFarmModal">Add Farm</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/auth/logout">Logout</a>
@@ -72,8 +75,61 @@
         </div>
     </div>
 
+    <!-- Admin: Add Farm Modal -->
+    <div class="modal fade" id="addFarmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Farm Investment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addFarmForm">
+                        <div class="mb-3">
+                            <label class="form-label">Package Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input type="text" class="form-control" name="location" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Duration</label>
+                            <input type="text" class="form-control" name="duration" required placeholder="e.g., 6 months">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Price per Unit (₦)</label>
+                            <input type="number" class="form-control" name="pricePerUnit" required min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Available Units</label>
+                            <input type="number" class="form-control" name="availableUnits" required min="1">
+                        </div>
+                        <button type="submit" class="btn btn-success">Add Farm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let currentFarmId = null;
+        let currentPricePerUnit = 0;
+
+        // Check if user is admin
+        async function checkAdminStatus() {
+            try {
+                const response = await fetch('/api/users/profile');
+                const user = await response.json();
+                if (user.role === 'ROLE_ADMIN') {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                }
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+            }
+        }
+
         // Fetch and display farms
         async function fetchFarms(page = 1) {
             try {
@@ -90,20 +146,154 @@
         function displayFarms(farms) {
             const farmsList = document.getElementById('farmsList');
             farmsList.innerHTML = farms.map(farm => `
-                <div class="col-md-6">
-                    <div class="card">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
                         <div class="card-body">
                             <h5 class="card-title">${farm.name}</h5>
                             <p class="card-text">Location: ${farm.location}</p>
                             <p class="card-text">Duration: ${farm.duration}</p>
                             <p class="card-text">Price per Unit: ₦${farm.pricePerUnit}</p>
+                            <p class="card-text">Available Units: ${farm.availableUnits}</p>
                             <button class="btn btn-success" onclick="openInvestModal('${farm.id}', ${farm.pricePerUnit})">
                                 Invest Now
                             </button>
+                            ${farm.status === 'available' ? 
+                                `<span class="badge bg-success ms-2">Available</span>` : 
+                                `<span class="badge bg-danger ms-2">Not Available</span>`
+                            }
+                            ${document.querySelector('.admin-only') ? 
+                                `<button class="btn btn-outline-primary ms-2" onclick="toggleFarmStatus('${farm.id}', '${farm.status}')">
+                                    Toggle Status
+                                </button>` : ''
+                            }
                         </div>
                     </div>
                 </div>
             `).join('');
+        }
+
+        // Setup pagination
+        function setupPagination(totalPages, currentPage) {
+            const pagination = document.getElementById('pagination');
+            let paginationHTML = '';
+            
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="fetchFarms(${currentPage - 1})">Previous</a>
+                </li>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <li class="page-item ${currentPage === i ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="fetchFarms(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="fetchFarms(${currentPage + 1})">Next</a>
+                </li>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // Handle investment modal
+        function openInvestModal(farmId, pricePerUnit) {
+            currentFarmId = farmId;
+            currentPricePerUnit = pricePerUnit;
+            const modal = new bootstrap.Modal(document.getElementById('investModal'));
+            const form = document.getElementById('investForm');
+            const unitsInput = document.getElementById('units');
+            const totalAmount = document.getElementById('totalAmount');
+            
+            unitsInput.value = '';
+            totalAmount.textContent = '₦0';
+            
+            unitsInput.addEventListener('input', () => {
+                const total = unitsInput.value * currentPricePerUnit;
+                totalAmount.textContent = `₦${total.toLocaleString()}`;
+            });
+            
+            modal.show();
+        }
+
+        // Handle investment form submission
+        document.getElementById('investForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const units = document.getElementById('units').value;
+
+            try {
+                const response = await fetch(`/api/farms/${currentFarmId}/invest`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ units: parseInt(units) })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.paymentLink;
+                } else {
+                    alert('Investment failed: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing your investment');
+            }
+        });
+
+        // Handle adding new farm (admin only)
+        document.getElementById('addFarmForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const farmData = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('/api/farms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(farmData)
+                });
+
+                if (response.ok) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addFarmModal'));
+                    modal.hide();
+                    e.target.reset();
+                    fetchFarms();
+                } else {
+                    const error = await response.json();
+                    alert('Failed to add farm: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while adding the farm');
+            }
+        });
+
+        // Toggle farm status (admin only)
+        async function toggleFarmStatus(farmId, currentStatus) {
+            try {
+                const response = await fetch(`/api/farms/${farmId}/status`, {
+                    method: 'PATCH'
+                });
+
+                if (response.ok) {
+                    fetchFarms();
+                } else {
+                    const error = await response.json();
+                    alert('Failed to update status: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while updating farm status');
+            }
         }
 
         // Fetch and display user investments
@@ -118,7 +308,16 @@
                             <h6 class="card-title">${inv.Farm.name}</h6>
                             <p class="card-text">Units: ${inv.units}</p>
                             <p class="card-text">Total: ₦${inv.totalAmount}</p>
-                            <p class="card-text">Status: ${inv.paymentStatus}</p>
+                            <p class="card-text">
+                                Status: 
+                                <span class="badge ${
+                                    inv.paymentStatus === 'completed' ? 'bg-success' :
+                                    inv.paymentStatus === 'pending' ? 'bg-warning' :
+                                    'bg-danger'
+                                }">
+                                    ${inv.paymentStatus}
+                                </span>
+                            </p>
                         </div>
                     </div>
                 `).join('');
@@ -127,9 +326,12 @@
             }
         }
 
-        // Initial load
-        fetchFarms();
-        fetchUserInvestments();
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAdminStatus();
+            fetchFarms();
+            fetchUserInvestments();
+        });
     </script>
 </body>
 </html>
