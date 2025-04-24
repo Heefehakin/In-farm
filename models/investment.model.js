@@ -7,6 +7,22 @@ const Investment = sequelize.define('Investment', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+  userId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  farmId: {
+    type: DataTypes.UUID,
+    allowNull: false,
+    references: {
+      model: 'Farms',
+      key: 'id'
+    }
+  },
   units: {
     type: DataTypes.INTEGER,
     allowNull: false
@@ -19,6 +35,8 @@ const Investment = sequelize.define('Investment', {
     type: DataTypes.ENUM('pending', 'completed', 'failed'),
     defaultValue: 'pending'
   }
+}, {
+  timestamps: true
 });
 
 module.exports = Investment;

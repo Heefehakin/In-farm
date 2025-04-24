@@ -2,8 +2,15 @@ const express = require('express');
 const session = require('express-session');
 const passport = require('./config/passport.setup');
 const { connectDB } = require('./config/database');
+const User = require('./models/user.model');
+const Farm = require('./models/farm.model');
+const Investment = require('./models/investment.model');
 require('dotenv').config();
 
+User.hasMany(Investment);
+Investment.belongsTo(User);
+Farm.hasMany(Investment);
+Investment.belongsTo(Farm);
 
 const app = express();
 

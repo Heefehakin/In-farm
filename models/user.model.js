@@ -20,6 +20,8 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('ROLE_USER', 'ROLE_ADMIN'),
     defaultValue: 'ROLE_USER'
   }
+}, {
+  timestamps: true
 });
 
 module.exports = User;

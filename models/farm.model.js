@@ -9,7 +9,8 @@ const Farm = sequelize.define('Farm', {
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
+    unique: true
   },
   location: {
     type: DataTypes.STRING,
@@ -34,6 +35,8 @@ const Farm = sequelize.define('Farm', {
     type: DataTypes.ENUM('available', 'not available'),
     defaultValue: 'available'
   }
+}, {
+  timestamps: true
 });
 
 module.exports = Farm;
